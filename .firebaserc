@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "fyp-lms-8c477"
+  },
+  "targets": {
+    "fyp-lms-8c477": {
+      "hosting": {
+        "dev": [
+          "fyp-lms-8c477"
+        ]
+      }
+    }
+  }
+}

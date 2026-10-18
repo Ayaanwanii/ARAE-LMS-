@@ -1,0 +1,124 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isImageFile(name) {
+      return name.matches('(?i).*\\.(jpg|jpeg|png|gif|webp|svg)$');
+    }
+
+    function isPdfFile(name) {
+      return name.matches('(?i).*\\.pdf$');
+    }
+
+    function isVideoFile(name) {
+      return name.matches('(?i).*\\.(mp4|webm|avi|mov|mkv)$');
+    }
+
+    function isAudioFile(name) {
+      return name.matches('(?i).*\\.(mp3|wav|ogg|m4a)$');
+    }
+
+    function isValidFile(name) {
+      return isImageFile(name) || isPdfFile(name) || isVideoFile(name) || isAudioFile(name);
+    }
+
+    // Default deny all
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // ==================== PROGRAMS ====================
+    match /programs/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isValidFile(request.resource.name) && request.resource.size <= 10 * 1024 * 1024;
+    }
+
+    // ==================== PROFILES ====================
+    match /profiles/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isValidFile(request.resource.name) && request.resource.size <= 10 * 1024 * 1024;
+    }
+
+    // ==================== EPISODES ====================
+    match /episodes/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isValidFile(request.resource.name);
+    }
+
+    // Episode videos - larger size limit
+    match /episodes/videos/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isVideoFile(request.resource.name) && request.resource.size <= 500 * 1024 * 1024;
+    }
+
+    // Episode PDFs
+    match /episodes/pdfs/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isPdfFile(request.resource.name) && request.resource.size <= 50 * 1024 * 1024;
+    }
+
+    // ==================== ATTACHMENTS ====================
+    match /attachments/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isValidFile(request.resource.name);
+    }
+
+    // Attachment PDFs
+    match /attachments/pdfs/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isPdfFile(request.resource.name) && request.resource.size <= 50 * 1024 * 1024;
+    }
+
+    // ==================== NEWS ====================
+    match /news/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isValidFile(request.resource.name) && request.resource.size <= 10 * 1024 * 1024;
+    }
+
+    // ==================== REWARDS ====================
+    match /rewards/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isValidFile(request.resource.name) && request.resource.size <= 10 * 1024 * 1024;
+    }
+
+    // ==================== CERTIFICATES ====================
+    match /certificates/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isValidFile(request.resource.name);
+    }
+
+    // ==================== RANKS ====================
+    match /ranks/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isValidFile(request.resource.name) && request.resource.size <= 10 * 1024 * 1024;
+    }
+
+    // ==================== FOLDERS ====================
+    match /folders/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isValidFile(request.resource.name) && request.resource.size <= 10 * 1024 * 1024;
+    }
+
+    // ==================== BACKGROUNDS ====================
+    match /backgrounds/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isValidFile(request.resource.name) && request.resource.size <= 10 * 1024 * 1024;
+    }
+
+    // ==================== ADS (PUBLIC READ) ====================
+    match /ads/{allPaths=**} {
+      allow read: if true; // Public read
+      allow write: if isAuthenticated() && isValidFile(request.resource.name) && request.resource.size <= 10 * 1024 * 1024;
+    }
+
+    // ==================== PUBLIC ASSETS ====================
+    match /public/{allPaths=**} {
+      allow read: if true; // Public read
+      allow write: if false; // No uploads to public folder
+    }
+  }
+}

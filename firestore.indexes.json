@@ -1,0 +1,269 @@
+{
+    "indexes": [
+        {
+            "collectionGroup": "news",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "isPublished",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "isPinned",
+                    "order": "DESCENDING"
+                },
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "news",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "tags",
+                    "arrayConfig": "CONTAINS"
+                },
+                {
+                    "fieldPath": "isPublished",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "isPinned",
+                    "order": "DESCENDING"
+                },
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "chat_messages",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "programRef",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "timestamp",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "chat_messages",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "programRef",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "roomId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "timestamp",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "chat_rooms",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "programRef",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        
+        {
+            "collectionGroup": "redemptions",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "userId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "redeemedAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        
+        {
+            "collectionGroup": "program_folders",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "createdBy",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "folder_views",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "folderId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "viewedAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "event",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "category",
+                    "arrayConfig": "CONTAINS"
+                },
+                {
+                    "fieldPath": "access",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "event",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "category",
+                    "arrayConfig": "CONTAINS"
+                },
+                {
+                    "fieldPath": "mode",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "access",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "event",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "category",
+                    "arrayConfig": "CONTAINS"
+                },
+                {
+                    "fieldPath": "archived",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "event",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "category",
+                    "arrayConfig": "CONTAINS"
+                },
+                {
+                    "fieldPath": "mode",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "archived",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "event",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "mode",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "access",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "event",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "mode",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "archived",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "schools",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "region",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "name",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "users",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "isOrganisation",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "displayName",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "events",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "eventType",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "timestamp",
+                    "order": "DESCENDING"
+                }
+            ]
+        }
+    ],
+    "fieldOverrides": []
+}

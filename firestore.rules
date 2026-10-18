@@ -1,0 +1,252 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // User Profiles
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      
+      // Users can update their own profile (except protected role fields)
+      // SuperAdmins can update any user's profile including role fields
+      allow update: if request.auth != null && (
+        // SuperAdmin can update any user
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true ||
+        // Users can update their own profile, but not role fields
+        (request.auth.uid == userId && 
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isSuperAdmin', 'isOrganisation', 'isSubAdmin'])
+        )
+      );
+    }
+
+    // Programs
+    match /programs/{programId} {
+      allow read: if true; // Publicly readable
+      allow write: if request.auth != null && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrganisation == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSubAdmin == true
+      );
+    }
+
+    // Rewards (New)
+    match /rewards/{rewardId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrganisation == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSubAdmin == true
+      );
+    }
+
+    // Redemptions (New)
+    match /redemptions/{redemptionId} {
+      allow read: if request.auth != null && (
+        resource.data.userId == request.auth.uid || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrganisation == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSubAdmin == true
+      );
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrganisation == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSubAdmin == true
+      );
+      allow delete: if false;
+    }
+
+    // Schools
+    match /schools/{schoolId} {
+      allow read: if true;
+      allow write: if request.auth != null && (
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true
+      );
+    }
+
+    // Chat
+    match /chat_rooms/{roomId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && (
+        resource.data.createdBy == request.auth.uid ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true
+      );
+    }
+
+    match /chat_messages/{messageId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.userRef == request.auth.uid;
+      allow delete: if request.auth != null && (
+        resource.data.userRef == request.auth.uid ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true
+      );
+    }
+
+    // User Program Progress
+    match /user_program_progress/{progressId} {
+      allow read: if request.auth != null && (
+        (resource != null && resource.data.userId == request.auth.uid) ||
+        (resource == null && progressId.matches('^' + request.auth.uid + '_.*')) ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrganisation == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSubAdmin == true
+      );
+      // Split write into specific operations for better security and reliability
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+
+    // News & Updates
+    match /news/{newsId} {
+      allow read: if true;
+      allow write: if request.auth != null && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrganisation == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true
+      );
+    }
+
+    // Email campaign feature removed: campaign collections and rules deleted
+
+    // Events (Programs) - ensuring compatibility if collection is named 'event'
+    // Events (Programs) - ensuring compatibility if collection is named 'event'
+    match /event/{eventId} {
+      allow read: if true;
+      allow create, delete: if request.auth != null && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrganisation == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSubAdmin == true
+      );
+      allow update: if request.auth != null && (
+        // Admin can update anything
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrganisation == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSubAdmin == true ||
+        // Program creators can update their own program (any field except createdBy, joined-related, and role fields)
+        (resource.data.createdBy == request.auth.uid && 
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['createdBy', 'whoCreated', 'joined', 'privateAccess'])
+        ) ||
+        // Regular users can ONLY update joined/userJoined fields (Joining/Leaving)
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['joined', 'userJoined', 'userJoinedNumber'])
+      );
+
+      // Certificate Generation Logs - Tracks bulk certificate downloads
+      match /certificateLogs/{logId} {
+        // Anyone authenticated can read logs (for stats display)
+        allow read: if request.auth != null;
+        
+        // Authenticated users can create logs (record their certificate generation)
+        allow create: if request.auth != null && 
+          request.resource.data.generatedBy.id == request.auth.uid;
+        
+        // No updates or deletes - logs are immutable for audit purposes
+        allow update, delete: if false;
+      }
+    }
+
+    // Advertisements
+    match /advertisements/{adId} {
+      allow read: if true;
+      allow write: if request.auth != null && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrganisation == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true
+      );
+    }
+
+    // Notifications
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrganisation == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSubAdmin == true
+      );
+      // No update/delete logic needed for now as they are immutable logs
+      allow update, delete: if false; 
+    }
+
+    // Program Folders
+    match /program_folders/{folderId} {
+      allow read: if request.auth != null;
+      allow create, delete: if request.auth != null && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrganisation == true ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true
+      );
+      allow update: if request.auth != null && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrganisation == true ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true ||
+        // Regular users can update joining fields
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['joined', 'userJoined', 'userJoinedNumber'])
+      );
+    }
+
+    // Folder Views - Admin read, Server write
+    match /folder_views/{viewId} {
+      allow read: if request.auth != null && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrganisation == true ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true
+      );
+      allow write: if false; // Server-side only
+    }
+
+    // Ranks collection
+    match /ranks/{rankId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true;
+    }
+
+    // User Attendance - Tracks daily login, online status, time spent
+    match /user_attendance/{attendanceId} {
+      // Users can read and write their own attendance records
+      // Admins can read all for the dashboard
+      allow read: if request.auth != null && (
+        // Own record (doc ID starts with userId)
+        attendanceId.matches('^' + request.auth.uid + '_.*') ||
+        // Admins can read all
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrganisation == true ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSubAdmin == true
+      );
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // Global Settings
+    match /settings/{settingId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrganisation == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSubAdmin == true
+      );
+    }
+
+    // Program Feedback
+    match /program_feedback/{feedbackId} {
+      allow read: if request.auth != null && (
+        (resource != null && resource.data.userId == request.auth.uid) ||
+        (resource == null && feedbackId.matches('^' + request.auth.uid + '_.*')) ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrganisation == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSubAdmin == true
+      );
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // AI Recommendation Cache - Stores personalized program recommendations
+    match /user_recommendations/{recId} {
+      allow read: if request.auth != null && (
+        // Users can read their own recommendations
+        (resource != null && resource.data.userId == request.auth.uid) ||
+        // Admins can read all recommendations for analytics
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrganisation == true ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true
+      );
+      // Only server-side (API routes) should write recommendations
+      allow write: if false;
+    }
+  }
+}
